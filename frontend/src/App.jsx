@@ -6,6 +6,7 @@ import UserSignup from './pages/UserSignup';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateEvent from './pages/CreateEvent';
 import UserDashboard from './pages/UserDashboard'; // Import the new dashboard
+import EventDescription from './pages/EventDescription';
 
 function App() {
   return (
@@ -16,7 +17,8 @@ function App() {
         <Route path="/signup" element={<UserSignup />} />
         <Route path="/admin-dashboard" element={<AdminDashboard />} />
         <Route path="/create-event" element={<CreateEvent />} />
-        <Route path="/user-dashboard" element={<UserDashboard />} /> {/* Add this new route */}
+        <Route path="/user-dashboard" element={<UserDashboard />} /> 
+        <Route path="/event/:eventId" element={<EventDescription />} />
       </Routes>
     </Router>
   );

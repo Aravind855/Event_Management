@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Make sure to import Link
+import { Link } from 'react-router-dom'; // Link is already imported
 import axios from 'axios';
 
 function AdminDashboard() {
@@ -11,7 +11,6 @@ function AdminDashboard() {
 
   const fetchEvents = async () => {
     try {
-      // Make sure your backend is running and accessible at this address
       const response = await axios.get('http://127.0.0.1:8000/api/get-events/');
       if (response.data && response.data.events) {
         setEvents(response.data.events);
@@ -21,7 +20,6 @@ function AdminDashboard() {
     }
   };
 
-  // Helper function to format the date and time
   const formatEventDate = (dateStr, timeStr) => {
     const [year, month, day] = dateStr.split('-');
     const [hours, minutes] = timeStr.split(':');
@@ -45,11 +43,18 @@ function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <header className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-gray-800">Event Hive</h1>
-          <Link to="/create-event">
-            <button className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300">
-              Create Event
-            </button>
-          </Link>
+          <div className="flex items-center space-x-4">
+            <Link to="/create-event">
+              <button className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300">
+                Create Event
+              </button>
+            </Link>
+            <Link to="/">
+              <button className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition-colors">
+                Logout
+              </button>
+            </Link>
+          </div>
         </header>
 
         {/* Hero Section */}
@@ -69,7 +74,6 @@ function AdminDashboard() {
               </button>
             </div>
           </div>
-          {/* Decorative elements */}
           <div className="absolute top-0 right-0 -mt-10 -mr-16 text-indigo-500 opacity-20">
             <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 9l11 7 9-7-2.89-1.74L12 12.27 4.5 9zM12 14l-9-5.5V17l9 5.5 9-5.5V8.5L12 14z"/></svg>
           </div>
@@ -89,31 +93,34 @@ function AdminDashboard() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {events.map((event) => (
-                <div key={event._id} className="bg-white rounded-xl shadow-lg overflow-hidden transform hover:-translate-y-1 transition-transform duration-300">
-                  <div className="relative">
-                    {event.imageBase64 && (
-                      <img
-                        src={`data:image/jpeg;base64,${event.imageBase64}`}
-                        alt={event.eventTitle}
-                        className="w-full h-48 object-cover"
-                      />
-                    )}
-                    <div className="absolute top-2 left-2 bg-white text-indigo-600 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                      {event.eventCost && parseFloat(event.eventCost) > 0 ? 'PAID' : 'FREE'}
+                // --- WRAP THE CARD WITH A LINK ---
+                <Link to={`/event/${event._id}`} key={event._id} className="block group">
+                  <div className="bg-white rounded-xl shadow-lg overflow-hidden h-full group-hover:shadow-2xl transition-shadow duration-300 transform group-hover:-translate-y-1">
+                    <div className="relative">
+                      {event.imageBase64 && (
+                        <img
+                          src={`data:image/jpeg;base64,${event.imageBase64}`}
+                          alt={event.eventTitle}
+                          className="w-full h-48 object-cover"
+                        />
+                      )}
+                      <div className="absolute top-2 left-2 bg-white text-indigo-600 text-xs font-bold px-3 py-1 rounded-full shadow-md">
+                        {event.eventCost && parseFloat(event.eventCost) > 0 ? `₹${event.eventCost}` : 'FREE'}
+                      </div>
+                    </div>
+                    <div className="p-5">
+                      <h3 className="text-xl font-bold text-gray-800 mb-2 truncate" title={event.eventTitle}>
+                        {event.eventTitle}
+                      </h3>
+                      <p className="text-indigo-500 font-semibold text-sm mb-3">
+                        {formatEventDate(event.eventStartDate, event.eventStartTime)}
+                      </p>
+                      <p className="text-gray-600 text-sm">
+                        {event.eventVenue}
+                      </p>
                     </div>
                   </div>
-                  <div className="p-5">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2 truncate" title={event.eventTitle}>
-                      {event.eventTitle}
-                    </h3>
-                    <p className="text-indigo-500 font-semibold text-sm mb-3">
-                      {formatEventDate(event.eventStartDate, event.eventStartTime)}
-                    </p>
-                    <p className="text-gray-600 text-sm">
-                      {event.eventVenue}
-                    </p>
-                  </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

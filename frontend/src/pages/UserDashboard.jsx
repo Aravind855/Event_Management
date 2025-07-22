@@ -11,11 +11,6 @@ const FooterLink = ({ href, children }) => (
     <a href={href} className="text-gray-400 hover:text-white transition-colors">{children}</a>
 );
 
-const SocialIcon = ({ href, children }) => (
-    <a href={href} className="text-gray-400 hover:text-white transition-colors">{children}</a>
-);
-
-
 function UserDashboard() {
   const [events, setEvents] = useState([]);
   const [visibleEvents, setVisibleEvents] = useState(6);
@@ -65,9 +60,8 @@ function UserDashboard() {
                 <header className="flex justify-between items-center">
                     <h1 className="text-3xl font-bold text-white">Event <span className="text-purple-400">Hive</span></h1>
                     <div className="flex items-center space-x-4">
-                        <Link to="/login" className="text-white font-semibold hover:text-purple-300 transition-colors">Login</Link>
-                        <Link to="/signup" className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition-colors">
-                            Signup
+                        <Link to="/" className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition-colors">
+                            Logout
                         </Link>
                     </div>
                 </header>
@@ -127,24 +121,30 @@ function UserDashboard() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {events.slice(0, visibleEvents).map(event => (
-                        <div key={event._id} className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200">
-                             <div className="relative">
-                                {event.imageBase64 && (
-                                    <img src={`data:image/jpeg;base64,${event.imageBase64}`} alt={event.eventTitle} className="w-full h-48 object-cover"/>
-                                )}
-                                <span className="absolute top-3 left-3 bg-white text-purple-600 text-xs font-bold px-2 py-1 rounded-full shadow-md">
-                                    {event.eventCost && parseFloat(event.eventCost) > 0 ? 'PAID' : 'FREE'}
-                                </span>
+                        // --- WRAPPED CARD WITH LINK ---
+                        <Link to={`/event/${event._id}`} key={event._id} className="block group">
+                            <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 h-full flex flex-col group-hover:shadow-xl transition-shadow duration-300">
+                                <div className="relative">
+                                    {event.imageBase64 && (
+                                        <img src={`data:image/jpeg;base64,${event.imageBase64}`} alt={event.eventTitle} className="w-full h-48 object-cover"/>
+                                    )}
+                                    <span className="absolute top-3 left-3 bg-white text-purple-600 text-xs font-bold px-2 py-1 rounded-full shadow-md">
+                                        {event.eventCost && parseFloat(event.eventCost) > 0 ? `₹${event.eventCost}` : 'FREE'}
+                                    </span>
+                                </div>
+                                <div className="p-5 flex-grow flex flex-col">
+                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{event.eventTitle}</h3>
+                                    <p className="text-sm text-purple-600 font-semibold mb-3">{formatEventDate(event.eventStartDate, event.eventStartTime)}</p>
+                                    <p className="text-sm text-gray-600 mb-4">{event.eventVenue}</p>
+                                    {/* The button below is now for visual cue; the entire card is the link */}
+                                    <div className="mt-auto pt-4">
+                                        <div className="w-full bg-purple-600 text-white text-center font-bold py-2 px-4 rounded-lg group-hover:bg-purple-700 transition-colors">
+                                            View Details
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="p-5">
-                                <h3 className="text-lg font-bold text-gray-900 mb-2">{event.eventTitle}</h3>
-                                <p className="text-sm text-purple-600 font-semibold mb-3">{formatEventDate(event.eventStartDate, event.eventStartTime)}</p>
-                                <p className="text-sm text-gray-600 mb-4">{event.eventVenue}</p>
-                                <button className="w-full bg-purple-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors">
-                                    Book Now
-                                </button>
-                            </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             )}
