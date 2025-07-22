@@ -48,7 +48,7 @@ export default function Login() {
     const payload = { email: formData.email, password: formData.password };
 
     try {
-      const response = await axios.post(`http://127.0.0.1:8000${endpoint}`, payload);
+      const response = await axios.post(`https://event-management-m7h6.onrender.com${endpoint}`, payload);
 
       if (response.data.status === 'success') {
         localStorage.setItem('access_token', response.data.tokens.access);

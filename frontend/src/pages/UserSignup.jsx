@@ -76,7 +76,7 @@ useEffect(() => {
   };
 
   try {
-    const response = await fetch(`http://127.0.0.1:8000${endpoint}`, {
+    const response = await fetch(`https://event-management-m7h6.onrender.com${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -115,7 +115,7 @@ function CreateEvent() {
 
     try {
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/generate-event-description/',
+        'https://event-management-m7h6.onrender.com/api/generate-event-description/',
         {
           eventTitle,
           eventVenue,
@@ -155,7 +155,7 @@ function CreateEvent() {
 
     try {
       const response = await axios.post(
-        'http://127.0.0.1:8000/api/create-event/',
+        'https://event-management-m7h6.onrender.com/api/create-event/',
         {
           eventTitle,
           eventVenue,

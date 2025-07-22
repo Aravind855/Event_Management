@@ -30,7 +30,7 @@ function EventDescription() {
   const fetchEventDetails = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/event/${eventId}/`);
+      const response = await axios.get(`https://event-management-m7h6.onrender.com/api/event/${eventId}/`);
       if (response.data.status === 'success') {
         setEvent(response.data.event);
       } else {

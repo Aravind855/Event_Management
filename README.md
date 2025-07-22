@@ -130,7 +130,7 @@ python manage.py migrate
 Test the Backend Setup:
 python manage.py runserver
 
-The backend should be running at http://127.0.0.1:8000.
+The backend should be running at https://event-management-m7h6.onrender.com.
 
 
 Frontend Setup

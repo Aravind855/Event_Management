@@ -44,7 +44,7 @@ function UserDashboard() {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/get-events/', {
+      const response = await axios.get('https://event-management-m7h6.onrender.com/api/get-events/', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
         },
