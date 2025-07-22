@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-#^g$gk=997=u0i5glqo0a*iw#p=oq+d+iel@dth#icao_ydks^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['event-management-m7h6.onrender.com']  # Add your domain here
 
 
 # Application definition
@@ -74,7 +74,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'backend.wsgi.application'
 
 CORS_ALLOWED_ORIGINS = [
-"*",  # Add both for safety
+"*",  
 ]
 
 CORS_ALLOW_METHODS = [
