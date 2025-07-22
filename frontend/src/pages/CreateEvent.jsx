@@ -32,7 +32,12 @@ function CreateEvent() {
   const [imagePreview, setImagePreview] = useState(null);
   const [eventDescription, setEventDescription] = useState('');
   const [message, setMessage] = useState('');
+  const [startDateError, setStartDateError] = useState('');
+  const [endDateError, setEndDateError] = useState('');
   const navigate = useNavigate();
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0]; // 2025-07-22
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -46,76 +51,128 @@ function CreateEvent() {
     }
   };
 
- const generateDescription = async () => {
-  if (!eventTitle) {
-    setMessage('Please enter an event title first to generate a description.');
-    return;
-  }
-  setMessage('Generating AI description...');
-  const token = localStorage.getItem('access_token');
-  if (!token) {
-    setMessage('Authentication error. Please log in again.');
-    return;
-  }
+  const validateDates = () => {
+    let isValid = true;
 
-  console.log("Sending payload:", {
-    eventTitle,
-    eventVenue,
-    eventStartTime,
-    eventEndTime,
-    eventStartDate,
-    eventEndDate,
-    eventCost,
-  });
+    // Validate start date (must be today or later)
+    if (eventStartDate && eventStartDate < today) {
+      setStartDateError('Start date cannot be before today.');
+      isValid = false;
+    } else {
+      setStartDateError('');
+    }
 
-  try {
-    const response = await axios.post('http://127.0.0.1:8000/api/generate-event-description/', {
-      eventTitle,
-      eventVenue,
-      eventStartTime,
-      eventEndTime,
-      eventStartDate,
-      eventEndDate,
-      eventCost,
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    setEventDescription(response.data.description);
-    setMessage('Description generated successfully!');
-  } catch (error) {
-    console.error("Error details:", error);
-    setMessage('Error generating description: ' + (error.response?.data?.message || error.message));
-  }
-};
+    // Validate end date (must not be before start date)
+    if (eventStartDate && eventEndDate && eventEndDate < eventStartDate) {
+      setEndDateError('End date cannot be before start date.');
+      isValid = false;
+    } else {
+      setEndDateError('');
+    }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setMessage('Creating event...');
+    return isValid;
+  };
+
+  const handleStartDateChange = (e) => {
+    const value = e.target.value;
+    setEventStartDate(value);
+    // Clear end date error if start date changes
+    if (eventEndDate && value > eventEndDate) {
+      setEndDateError('End date cannot be before start date.');
+    } else {
+      setEndDateError('');
+    }
+    // Validate start date
+    if (value < today) {
+      setStartDateError('Start date cannot be before today.');
+    } else {
+      setStartDateError('');
+    }
+  };
+
+  const handleEndDateChange = (e) => {
+    const value = e.target.value;
+    setEventEndDate(value);
+    // Validate end date
+    if (eventStartDate && value < eventStartDate) {
+      setEndDateError('End date cannot be before start date.');
+    } else {
+      setEndDateError('');
+    }
+  };
+
+  const generateDescription = async () => {
+    if (!eventTitle) {
+      setMessage('Please enter an event title first to generate a description.');
+      return;
+    }
+    setMessage('Generating AI description...');
     const token = localStorage.getItem('access_token');
     if (!token) {
-        setMessage('Authentication error. Please log in again.');
-        return;
+      setMessage('Authentication error. Please log in again.');
+      return;
     }
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/create-event/', {
-        eventTitle,
-        eventVenue,
-        eventStartTime,
-        eventEndTime,
-        eventStartDate,
-        eventEndDate,
-        eventCost,
-        eventDescription,
-        imageBase64,
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await axios.post(
+        'http://127.0.0.1:8000/api/generate-event-description/',
+        {
+          eventTitle,
+          eventVenue,
+          eventStartTime,
+          eventEndTime,
+          eventStartDate,
+          eventEndDate,
+          eventCost,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
+      );
+      setEventDescription(response.data.description);
+      setMessage('Description generated successfully!');
+    } catch (error) {
+      console.error('Error details:', error);
+      setMessage('Error generating description: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validateDates()) {
+      setMessage('Please fix the date errors before submitting.');
+      return;
+    }
+    setMessage('Creating event...');
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setMessage('Authentication error. Please log in again.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        'http://127.0.0.1:8000/api/create-event/',
+        {
+          eventTitle,
+          eventVenue,
+          eventStartTime,
+          eventEndTime,
+          eventStartDate,
+          eventEndDate,
+          eventCost,
+          eventDescription,
+          imageBase64,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       setMessage(response.data.message || 'Event created successfully!');
       if (response.data.status === 'success') {
         setTimeout(() => navigate('/admin-dashboard'), 2000);
@@ -124,13 +181,16 @@ function CreateEvent() {
       setMessage(error.response?.data?.message || 'An error occurred while creating the event.');
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-white font-sans">
-       <div className="border-t-4 border-indigo-600"></div>
-       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="border-t-4 border-indigo-600"></div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <header className="mb-12">
-          <Link to="/admin-dashboard" className="text-3xl font-bold text-gray-800 hover:text-indigo-600 transition-colors">
+          <Link
+            to="/admin-dashboard"
+            className="text-3xl font-bold text-gray-800 hover:text-indigo-600 transition-colors"
+          >
             Event <span className="text-indigo-600">Hive</span>
           </Link>
         </header>
@@ -186,18 +246,26 @@ function CreateEvent() {
                   <input
                     type="date"
                     value={eventStartDate}
-                    onChange={(e) => setEventStartDate(e.target.value)}
+                    onChange={handleStartDateChange}
+                    min={today}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
+                  {startDateError && (
+                    <p className="text-red-600 text-sm mt-1">{startDateError}</p>
+                  )}
                 </div>
                 <div className="w-full md:w-1/2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">End date</label>
                   <input
                     type="date"
                     value={eventEndDate}
-                    onChange={(e) => setEventEndDate(e.target.value)}
+                    onChange={handleEndDateChange}
+                    min={eventStartDate || today}
                     className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
+                  {endDateError && (
+                    <p className="text-red-600 text-sm mt-1">{endDateError}</p>
+                  )}
                 </div>
               </div>
               <div>
@@ -218,7 +286,10 @@ function CreateEvent() {
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Event Image</label>
-                <label htmlFor="file-upload" className="flex items-center justify-center w-full h-56 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 overflow-hidden">
+                <label
+                  htmlFor="file-upload"
+                  className="flex items-center justify-center w-full h-56 bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 overflow-hidden"
+                >
                   {imagePreview ? (
                     <img src={imagePreview} alt="Event preview" className="h-full w-full object-cover" />
                   ) : (
@@ -227,19 +298,26 @@ function CreateEvent() {
                       <p className="mt-2 text-sm font-semibold text-gray-600">Upload Here</p>
                     </div>
                   )}
-                  <input id="file-upload" name="file-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                  <input
+                    id="file-upload"
+                    name="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
                 </label>
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">Event Description</label>
-                    <button
-                      type="button"
-                      onClick={generateDescription}
-                      className="px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-purple-600 transition duration-300"
-                    >
-                      Generate AI Description
-                    </button>
+                  <label className="block text-sm font-medium text-gray-700">Event Description</label>
+                  <button
+                    type="button"
+                    onClick={generateDescription}
+                    className="px-4 py-2 bg-purple-500 text-white text-sm font-semibold rounded-lg shadow-md hover:bg-purple-600 transition duration-300"
+                  >
+                    Generate AI Description
+                  </button>
                 </div>
                 <textarea
                   value={eventDescription}
@@ -250,7 +328,7 @@ function CreateEvent() {
               </div>
             </div>
           </div>
-          
+
           <div className="mt-12 text-center">
             <button
               type="submit"
@@ -262,11 +340,15 @@ function CreateEvent() {
         </form>
 
         {message && (
-          <p className={`mt-6 text-center font-medium ${message.includes('success') ? 'text-green-600' : message.includes('Error') ? 'text-red-600' : 'text-gray-600'}`}>
+          <p
+            className={`mt-6 text-center font-medium ${
+              message.includes('success') ? 'text-green-600' : message.includes('Error') ? 'text-red-600' : 'text-gray-600'
+            }`}
+          >
             {message}
           </p>
         )}
-       </div>
+      </div>
     </div>
   );
 }

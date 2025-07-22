@@ -26,11 +26,16 @@ function UserDashboard() {
   const [typeFilter, setTypeFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
 
-  // Carousel Images
+  // Carousel Images with Fallback
   const carouselImages = [
-    'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop',
-
-    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2070&auto=format&fit=crop',
+    {
+      src: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop',
+      fallback: 'https://picsum.photos/2070/500?random=1',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2070&auto=format&fit=crop',
+      fallback: 'https://picsum.photos/2070/500?random=2',
+    },
   ];
 
   useEffect(() => {
@@ -39,7 +44,11 @@ function UserDashboard() {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get('http://127.0.0.1:8000/api/get-events/');
+      const response = await axios.get('http://127.0.0.1:8000/api/get-events/', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+        },
+      });
       if (response.data && response.data.events) {
         setEvents(response.data.events);
       }
@@ -73,6 +82,11 @@ function UserDashboard() {
 
   const handlePrevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  // Image Error Handling
+  const handleImageError = (e, fallbackSrc) => {
+    e.target.src = fallbackSrc;
   };
 
   // Filtering Logic
@@ -129,8 +143,9 @@ function UserDashboard() {
         <div className="absolute inset-0">
           <img
             className="w-full h-full object-cover"
-            src={carouselImages[currentImageIndex]}
+            src={carouselImages[currentImageIndex].src}
             alt="Event background"
+            onError={(e) => handleImageError(e, carouselImages[currentImageIndex].fallback)}
           />
           <div className="absolute inset-0 bg-black bg-opacity-50"></div>
           {/* Carousel Controls */}
@@ -262,9 +277,10 @@ function UserDashboard() {
                 <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1">
                   <div className="relative">
                     <img
-                      src={`data:image/jpeg;base64,${event.imageBase64}`}
+                      src={event.imageBase64 ? `data:image/jpeg;base64,${event.imageBase64}` : 'https://picsum.photos/300/200?random=1'}
                       alt={event.eventTitle}
                       className="w-full h-48 object-cover"
+                      onError={(e) => (e.target.src = 'https://picsum.photos/300/200?random=1')}
                     />
                     <span className="absolute top-3 left-3 bg-white text-violet-900 text-xs font-bold px-2 py-1 rounded shadow-sm">
                       {parseFloat(event.eventCost) > 0 ? 'PAID' : 'FREE'}

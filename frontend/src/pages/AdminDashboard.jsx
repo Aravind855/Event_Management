@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Link is already imported
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+// --- STEP 1: Import your background image ---
+import event_img from '../assets/products.png'; // Make sure the path is correct
 
 function AdminDashboard() {
   const [events, setEvents] = useState([]);
+  const navigate = useNavigate(); // Use navigate for logout
 
   useEffect(() => {
     fetchEvents();
@@ -20,11 +23,14 @@ function AdminDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.clear(); // Clear all auth data
+    navigate('/');
+  };
+
   const formatEventDate = (dateStr, timeStr) => {
-    const [year, month, day] = dateStr.split('-');
-    const [hours, minutes] = timeStr.split(':');
-    const date = new Date(year, month - 1, day, hours, minutes);
-    
+    if (!dateStr || !timeStr) return "Date not specified";
+    const date = new Date(`${dateStr}T${timeStr}`);
     const options = {
       weekday: 'long',
       year: 'numeric',
@@ -34,90 +40,87 @@ function AdminDashboard() {
       minute: 'numeric',
       hour12: true,
     };
-    
     return new Intl.DateTimeFormat('en-US', options).format(date);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-100 font-sans">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <header className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800">Event Hive</h1>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Event <span className="text-purple-600">Hive</span>
+          </h1>
           <div className="flex items-center space-x-4">
             <Link to="/create-event">
-              <button className="bg-indigo-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300">
+              <button className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition duration-300">
                 Create Event
               </button>
             </Link>
-            <Link to="/">
-              <button className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition-colors">
+            <button onClick={handleLogout} className="bg-gray-200 text-gray-800 font-semibold px-5 py-2 rounded-lg hover:bg-gray-300 transition-colors">
                 Logout
-              </button>
-            </Link>
+            </button>
           </div>
         </header>
 
-        {/* Hero Section */}
-        <div className="bg-indigo-600 rounded-lg shadow-lg p-8 md:p-12 mb-12 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-5xl font-extrabold mb-3">Discover and experience</h2>
-            <p className="text-4xl md:text-5xl font-extrabold mb-4 text-indigo-200">extraordinary Events</p>
-            <p className="text-indigo-200 max-w-xl mb-8">
-              Enter in the world of events. Discover now the latest Events or start creating your own!
-            </p>
-            <div className="flex space-x-4">
-              <button className="bg-white text-indigo-600 font-semibold px-6 py-3 rounded-lg shadow-md hover:bg-gray-100 transition duration-300">
-                Discover now
-              </button>
-              <button className="border-2 border-white text-white font-semibold px-6 py-3 rounded-lg hover:bg-white hover:text-indigo-600 transition duration-300">
-                Watch video
-              </button>
+        {/* --- MODIFIED Hero Section with Background Image --- */}
+        <div 
+          className="rounded-xl shadow-lg p-8 md:p-12 mb-12 text-white relative overflow-hidden bg-cover bg-center"
+          style={{ backgroundImage: `url(${event_img})` }}
+        >
+            {/* This overlay adds a dark tint to make the text readable */}
+            <div className="absolute inset-0 bg-blue-900/70 z-0"></div>
+
+            {/* All content is placed in a relative container with a higher z-index */}
+            <div className="relative z-10">
+                <h2 className="text-4xl md:text-5xl font-extrabold mb-2">Discover and experience</h2>
+                <p className="text-4xl md:text-5xl font-extrabold mb-4 text-blue-200">extraordinary Events</p>
+                <p className="text-blue-100 max-w-xl mb-8">
+                Enter in the world of events. Discover now the latest Events or start creating your own!
+                </p>
+                <div className="flex space-x-4">
+                <button className="bg-white text-purple-600 font-semibold px-6 py-3 rounded-2xl shadow-md hover:bg-gray-100 transition duration-300">
+                    Discover now
+                </button>
+                <button className=" text-white font-semibold px-6 py-3 rounded-2xl hover:bg-white hover:text-purple-600 transition duration-300">
+                    Watch video
+                </button>
+                </div>
             </div>
-          </div>
-          <div className="absolute top-0 right-0 -mt-10 -mr-16 text-indigo-500 opacity-20">
-            <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L1 9l11 7 9-7-2.89-1.74L12 12.27 4.5 9zM12 14l-9-5.5V17l9 5.5 9-5.5V8.5L12 14z"/></svg>
-          </div>
-           <div className="absolute bottom-0 right-10 -mb-10 text-indigo-500 opacity-10">
-            <svg width="150" height="150" viewBox="0 0 24 24" fill="currentColor"><path d="M20.2 5.8l-4.9-4.9c-.4-.4-.9-.6-1.4-.6H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7.2c0-.5-.2-1-.8-1.4zM15 14h-4v4h-2v-4H5v-2h4V8h2v4h4v2z"/></svg>
-          </div>
         </div>
 
-        {/* Listed Events Section */}
+        {/* --- Listed Events Section --- */}
         <div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-6">Listed Events</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Listed Events</h2>
           {events.length === 0 ? (
             <div className="bg-white text-center p-12 rounded-lg shadow-md">
               <h3 className="text-xl font-medium text-gray-700">No events available.</h3>
-              <p className="text-gray-500 mt-2">Check back later or create a new event!</p>
+              <p className="text-gray-500 mt-2">Click "Create Event" to get started!</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                // --- WRAP THE CARD WITH A LINK ---
                 <Link to={`/event/${event._id}`} key={event._id} className="block group">
-                  <div className="bg-white rounded-xl shadow-lg overflow-hidden h-full group-hover:shadow-2xl transition-shadow duration-300 transform group-hover:-translate-y-1">
+                  <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 h-full flex flex-col transition-all duration-300 group-hover:shadow-xl group-hover:-translate-y-1">
                     <div className="relative">
-                      {event.imageBase64 && (
                         <img
-                          src={`data:image/jpeg;base64,${event.imageBase64}`}
-                          alt={event.eventTitle}
-                          className="w-full h-48 object-cover"
+                        src={`data:image/jpeg;base64,${event.imageBase64}`}
+                        alt={event.eventTitle}
+                        className="w-full h-48 object-cover"
                         />
-                      )}
-                      <div className="absolute top-2 left-2 bg-white text-indigo-600 text-xs font-bold px-3 py-1 rounded-full shadow-md">
-                        {event.eventCost && parseFloat(event.eventCost) > 0 ? `₹${event.eventCost}` : 'FREE'}
-                      </div>
+                        <span className="absolute top-3 left-3 bg-white text-gray-800 text-xs font-semibold px-3 py-1 rounded-md shadow-sm">
+                            {parseFloat(event.eventCost) > 0 ? "PAID" : "FREE"}
+                        </span>
                     </div>
-                    <div className="p-5">
-                      <h3 className="text-xl font-bold text-gray-800 mb-2 truncate" title={event.eventTitle}>
-                        {event.eventTitle}
-                      </h3>
-                      <p className="text-indigo-500 font-semibold text-sm mb-3">
-                        {formatEventDate(event.eventStartDate, event.eventStartTime)}
-                      </p>
-                      <p className="text-gray-600 text-sm">
-                        {event.eventVenue}
-                      </p>
+                    <div className="p-4 flex-grow flex flex-col">
+                        <h3 className="font-bold text-gray-800 mb-2 leading-tight">
+                            {event.eventTitle}
+                        </h3>
+                        <p className="text-purple-600 font-medium mb-3 text-sm">
+                            {formatEventDate(event.eventStartDate, event.eventStartTime)}
+                        </p>
+                        <p className="text-gray-500 text-xs uppercase tracking-wide mt-auto">
+                            {event.eventVenue}
+                        </p>
                     </div>
                   </div>
                 </Link>
