@@ -85,10 +85,16 @@ CORS_ALLOW_METHODS = [
 ]
 
 CORS_ALLOW_HEADERS = [
-    "content-type",
-    "accept",
+    'accept',
+    'accept-encoding',
+    'authorization', # <-- THIS IS THE KEY
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
 ]
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 

@@ -1,19 +1,37 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Search, Linkedin, Instagram, Facebook, ChevronLeft, ChevronRight } from 'lucide-react';
 
-// --- Helper Icons ---
-const SearchIcon = () => (
-    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+// --- Reusable FooterLink Component ---
+const FooterLink = ({ href, children }) => (
+  <a href={href} className="text-gray-200 hover:text-white transition-colors text-sm">{children}</a>
 );
 
-const FooterLink = ({ href, children }) => (
-    <a href={href} className="text-gray-400 hover:text-white transition-colors">{children}</a>
+// --- Reusable SocialIcon Component ---
+const SocialIcon = ({ href, children }) => (
+  <a href={href} className="text-white border border-gray-400 rounded p-2 hover:bg-white hover:text-indigo-800 transition-colors">
+    {children}
+  </a>
 );
 
 function UserDashboard() {
   const [events, setEvents] = useState([]);
   const [visibleEvents, setVisibleEvents] = useState(6);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const navigate = useNavigate();
+
+  // State for Filters
+  const [locationFilter, setLocationFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
+
+  // Carousel Images
+  const carouselImages = [
+    'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop',
+
+    'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=2070&auto=format&fit=crop',
+  ];
 
   useEffect(() => {
     fetchEvents();
@@ -30,166 +48,301 @@ function UserDashboard() {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('admin_name');
+    navigate('/');
+  };
+
   const loadMoreEvents = () => {
-    setVisibleEvents(prev => prev + 3);
+    setVisibleEvents((prev) => prev + 3);
   };
-  
-  const formatEventDate = (dateStr, timeStr) => {
-    if (!dateStr || !timeStr) return "Date & Time not specified";
-    const [year, month, day] = dateStr.split('-');
-    const [hours, minutes] = timeStr.split(':');
-    const date = new Date(year, month - 1, day, hours, minutes);
+
+  const formatEventDate = (dateStr) => {
+    if (!dateStr) return 'Date not specified';
+    const date = new Date(dateStr);
     const options = { weekday: 'long', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
-    return new Intl.DateTimeFormat('en-US', options).format(date);
+    return new Intl.DateTimeFormat('en-US', options).format(date).replace(' at', ',');
   };
+
+  // Carousel Navigation
+  const handleNextImage = () => {
+    setCurrentImageIndex((prev) => (prev + 1) % carouselImages.length);
+  };
+
+  const handlePrevImage = () => {
+    setCurrentImageIndex((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  // Filtering Logic
+  const filteredEvents = useMemo(() => {
+    return events.filter((event) => {
+      const locationMatch = locationFilter ? event.eventVenue === locationFilter : true;
+      const typeMatch = typeFilter ? event.eventTitle.toLowerCase().includes(typeFilter.toLowerCase()) : true;
+      const dateMatch = dateFilter ? checkDateFilter(event.eventStartDate, dateFilter) : true;
+      return locationMatch && typeMatch && dateMatch;
+    });
+  }, [events, locationFilter, typeFilter, dateFilter]);
+
+  const checkDateFilter = (eventDate, filter) => {
+    const today = new Date();
+    const event = new Date(eventDate);
+    if (filter === 'today') {
+      return event.toDateString() === today.toDateString();
+    } else if (filter === 'tomorrow') {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+      return event.toDateString() === tomorrow.toDateString();
+    } else if (filter === 'weekend') {
+      return event.getDay() === 0 || event.getDay() === 6;
+    } else if (filter === 'week') {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - today.getDay());
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      return event >= weekStart && event <= weekEnd;
+    }
+    return true;
+  };
+
+  // Dynamic Filter Options
+  const locationOptions = useMemo(() => [...new Set(events.map((e) => e.eventVenue))], [events]);
+  const typeOptions = useMemo(() => [...new Set(events.map((e) => e.eventTitle.split(' ')[0].replace(/,/g, '')))], [events]);
 
   return (
-    <div className="bg-white font-sans">
-        {/* Header and Hero Section */}
-        <div className="relative bg-gray-900">
-             <div className="absolute inset-0">
-                <img
-                    className="w-full h-full object-cover opacity-40"
-                    src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?q=80&w=2070&auto=format&fit=crop"
-                    alt="Concert background"
-                />
+    <div className="bg-white font-sans min-h-screen">
+      {/* Header */}
+      <header className="bg-white sticky top-0 z-50 shadow-sm border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">
+            Event <span className="text-purple-600">Hive</span>
+          </h1>
+          <button onClick={handleLogout} className="bg-purple-600 text-white font-medium px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm">
+            Logout
+          </button>
+        </div>
+      </header>
+
+      {/* Hero Section with Carousel */}
+      <div className="relative bg-gray-900 h-[500px] overflow-hidden">
+        <div className="absolute inset-0">
+          <img
+            className="w-full h-full object-cover"
+            src={carouselImages[currentImageIndex]}
+            alt="Event background"
+          />
+          <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+          {/* Carousel Controls */}
+          <button
+            onClick={handlePrevImage}
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 p-2 rounded-full hover:bg-opacity-75 transition"
+          >
+            <ChevronLeft className="h-6 w-6 text-white" />
+          </button>
+          <button
+            onClick={handleNextImage}
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-50 p-2 rounded-full hover:bg-opacity-75 transition"
+          >
+            <ChevronRight className="h-6 w-6 text-white" />
+          </button>
+        </div>
+        <div className="relative h-full flex flex-col justify-center items-center text-center px-4">
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
+            MADE FOR THOSE
+          </h2>
+          <h2 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-tight">
+            WHO DO
+          </h2>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative max-w-5xl mx-auto -mt-20 z-10 px-4">
+        <div className="bg-indigo-700 p-6 rounded-lg shadow-xl">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div>
+              <label className="text-white text-sm font-medium mb-2 block">Looking for</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full p-3 bg-white text-gray-700 rounded-md border-0 focus:ring-2 focus:ring-purple-400 text-sm"
+              >
+                <option value="">Choose event type</option>
+                {typeOptions.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
             </div>
-
-            <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-20">
-                {/* Header */}
-                <header className="flex justify-between items-center">
-                    <h1 className="text-3xl font-bold text-white">Event <span className="text-purple-400">Hive</span></h1>
-                    <div className="flex items-center space-x-4">
-                        <Link to="/" className="bg-purple-600 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:bg-purple-700 transition-colors">
-                            Logout
-                        </Link>
-                    </div>
-                </header>
-
-                {/* Hero Text */}
-                <div className="text-center pt-24 pb-16">
-                    <h2 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
-                        MADE FOR THOSE
-                    </h2>
-                    <h2 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
-                        WHO DO
-                    </h2>
-                </div>
-
-                {/* Search Bar */}
-                <div className="bg-indigo-700 bg-opacity-80 backdrop-blur-sm p-4 rounded-lg shadow-2xl">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                        <div className="md:col-span-1">
-                            <label className="text-white text-sm font-semibold mb-1 block">Looking for</label>
-                            <select className="w-full p-3 bg-indigo-500 text-white rounded-md border-0 focus:ring-2 focus:ring-purple-400">
-                                <option>Choose event type</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="text-white text-sm font-semibold mb-1 block">Location</label>
-                            <select className="w-full p-3 bg-indigo-500 text-white rounded-md border-0 focus:ring-2 focus:ring-purple-400">
-                                <option>Choose location</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-1">
-                            <label className="text-white text-sm font-semibold mb-1 block">When</label>
-                            <select className="w-full p-3 bg-indigo-500 text-white rounded-md border-0 focus:ring-2 focus:ring-purple-400">
-                                <option>Choose date and time</option>
-                            </select>
-                        </div>
-                        <div className="md:col-span-1">
-                            <button className="w-full bg-purple-600 p-3 rounded-md flex justify-center items-center hover:bg-purple-700 transition-colors shadow-lg">
-                               <SearchIcon />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            <div>
+              <label className="text-white text-sm font-medium mb-2 block">Location</label>
+              <select
+                value={locationFilter}
+                onChange={(e) => setLocationFilter(e.target.value)}
+                className="w-full p-3 bg-white text-gray-700 rounded-md border-0 focus:ring-2 focus:ring-purple-400 text-sm"
+              >
+                <option value="">Choose location</option>
+                {locationOptions.map((loc) => (
+                  <option key={loc} value={loc}>
+                    {loc}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label className="text-white text-sm font-medium mb-2 block">When</label>
+              <select
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full p-3 bg-white text-gray-700 rounded-md border-0 focus:ring-2 focus:ring-purple-400 text-sm"
+              >
+                <option value="">Choose date and time</option>
+                <option value="today">Today</option>
+                <option value="tomorrow">Tomorrow</option>
+                <option value="weekend">This Weekend</option>
+                <option value="week">This Week</option>
+              </select>
+            </div>
+            <div>
+              <button
+                onClick={() => {}} // Filters are already applied via state
+                className="w-full bg-purple-600 p-3 rounded-md flex justify-center items-center hover:bg-purple-700 transition-colors shadow-lg"
+              >
+                <Search className="h-5 w-5 text-white" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Upcoming <span className="text-purple-600">Events</span>
+          </h2>
+          <div className="flex space-x-3">
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            >
+              <option value="">Location</option>
+              {locationOptions.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </select>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            >
+              <option value="">Category</option>
+              {typeOptions.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Upcoming Events Section */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-            <div className="flex justify-between items-center mb-8">
-                <h2 className="text-3xl font-bold text-gray-800">Upcoming <span className="text-purple-600">Events</span></h2>
-                <div className="flex space-x-2">
-                    {/* Filter dropdowns can be implemented here */}
+        {filteredEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No events found matching your criteria.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.slice(0, visibleEvents).map((event) => (
+              <Link to={`/event/${event._id}`} key={event._id} className="block group">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100 transition-all duration-300 group-hover:shadow-lg group-hover:-translate-y-1">
+                  <div className="relative">
+                    <img
+                      src={`data:image/jpeg;base64,${event.imageBase64}`}
+                      alt={event.eventTitle}
+                      className="w-full h-48 object-cover"
+                    />
+                    <span className="absolute top-3 left-3 bg-white text-violet-900 text-xs font-bold px-2 py-1 rounded shadow-sm">
+                      {parseFloat(event.eventCost) > 0 ? 'PAID' : 'FREE'}
+                    </span>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 text-sm leading-tight line-clamp-2">
+                      {event.eventTitle}
+                    </h3>
+                    <p className="text-purple-600 font-medium mb-2 text-sm">{formatEventDate(event.eventStartDate)}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-500 text-xs uppercase tracking-wide">{event.eventVenue}</p>
+                      <button className="bg-purple-600 text-white text-sm font-medium py-1 px-3 rounded hover:bg-purple-700 transition-colors">
+                        Book Now
+                      </button>
+                    </div>
+                  </div>
                 </div>
-            </div>
+              </Link>
+            ))}
+          </div>
+        )}
 
-            {events.length === 0 ? (
-                <p className="text-center text-gray-500">No upcoming events found.</p>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {events.slice(0, visibleEvents).map(event => (
-                        // --- WRAPPED CARD WITH LINK ---
-                        <Link to={`/event/${event._id}`} key={event._id} className="block group">
-                            <div className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 h-full flex flex-col group-hover:shadow-xl transition-shadow duration-300">
-                                <div className="relative">
-                                    {event.imageBase64 && (
-                                        <img src={`data:image/jpeg;base64,${event.imageBase64}`} alt={event.eventTitle} className="w-full h-48 object-cover"/>
-                                    )}
-                                    <span className="absolute top-3 left-3 bg-white text-purple-600 text-xs font-bold px-2 py-1 rounded-full shadow-md">
-                                        {event.eventCost && parseFloat(event.eventCost) > 0 ? `₹${event.eventCost}` : 'FREE'}
-                                    </span>
-                                </div>
-                                <div className="p-5 flex-grow flex flex-col">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">{event.eventTitle}</h3>
-                                    <p className="text-sm text-purple-600 font-semibold mb-3">{formatEventDate(event.eventStartDate, event.eventStartTime)}</p>
-                                    <p className="text-sm text-gray-600 mb-4">{event.eventVenue}</p>
-                                    {/* The button below is now for visual cue; the entire card is the link */}
-                                    <div className="mt-auto pt-4">
-                                        <div className="w-full bg-purple-600 text-white text-center font-bold py-2 px-4 rounded-lg group-hover:bg-purple-700 transition-colors">
-                                            View Details
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </Link>
-                    ))}
-                </div>
-            )}
+        {visibleEvents < filteredEvents.length && (
+          <div className="text-center mt-12">
+            <button
+              onClick={loadMoreEvents}
+              className="bg-purple-600 text-white font-medium px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Load more...
+            </button>
+          </div>
+        )}
+      </main>
 
-            {visibleEvents < events.length && (
-                 <div className="text-center mt-12">
-                    <button onClick={loadMoreEvents} className="bg-purple-600 text-white font-semibold px-6 py-3 rounded-lg shadow-md hover:bg-purple-700 transition-transform transform hover:scale-105">
-                        Load more...
-                    </button>
-                </div>
-            )}
-        </main>
-        
-        {/* Footer */}
-        <footer className="bg-gray-800 text-white">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-1">
-                        <h2 className="text-2xl font-bold mb-4">Event <span className="text-purple-400">Hive</span></h2>
-                        <form className="flex">
-                            <input type="email" placeholder="Enter your mail" className="w-full p-2 rounded-l-md text-gray-800 border-0 focus:ring-2 focus:ring-purple-400" />
-                            <button type="submit" className="bg-purple-600 text-white px-4 py-2 rounded-r-md hover:bg-purple-700 transition-colors">Subscribe</button>
-                        </form>
-                    </div>
-                     <div className="md:col-span-2 grid grid-cols-2 md:grid-cols-4 gap-8">
-                        <div>
-                            <h3 className="font-bold mb-3">Links</h3>
-                            <ul className="space-y-2">
-                                <li><FooterLink href="#">Home</FooterLink></li>
-                                <li><FooterLink href="#">About</FooterLink></li>
-                                <li><FooterLink href="#">Services</FooterLink></li>
-                                <li><FooterLink href="#">Get in touch</FooterLink></li>
-                                <li><FooterLink href="#">FAQs</FooterLink></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-8 pt-8 border-t border-gray-700 flex justify-between items-center">
-                    <p className="text-gray-400 text-sm">© 2024 Event Hive. All rights reserved.</p>
-                    <div className="flex space-x-4">
-                       {/* Social icons here */}
-                    </div>
-                </div>
+      {/* Footer */}
+      <footer className="bg-indigo-800 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center">
+            <h2 className="text-4xl font-bold mb-4">
+              Event <span className="text-purple-400">Hive</span>
+            </h2>
+            <div className="flex justify-center max-w-md mx-auto mb-8">
+              <input
+                type="email"
+                placeholder="Enter your mail"
+                className="bg-white flex-1 px-4 py-3 text-gray-900 rounded-lg border-1 text-sm"
+              />
+              <button
+                type="submit"
+                className="bg-purple-600 ml-3 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium text-sm"
+              >
+                Subscribe
+              </button>
             </div>
-        </footer>
+            <nav className="flex justify-center space-x-6 mb-8">
+              <FooterLink href="#">Home</FooterLink>
+              <FooterLink href="#">About</FooterLink>
+              <FooterLink href="#">Services</FooterLink>
+              <FooterLink href="#">Get in touch</FooterLink>
+              <FooterLink href="#">FAQs</FooterLink>
+            </nav>
+          </div>
+          <div className="mt-8 pt-8 border-t border-white-700 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center space-x-4">
+              <button className="bg-purple-600 text-white text-xs font-semibold px-4 py-1 rounded">English</button>
+              <a href="#" className="text-gray-300 hover:text-white text-xs">French</a>
+              <a href="#" className="text-gray-300 hover:text-white text-xs">Hindi</a>
+            </div>
+            <div className="flex space-x-4 ml-35">
+              <SocialIcon href="#"><Linkedin size={20} /></SocialIcon>
+              <SocialIcon href="#"><Instagram size={20} /></SocialIcon>
+              <SocialIcon href="#"><Facebook size={20} /></SocialIcon>
+            </div>
+            <p className="text-white text-sm">Non Copyrighted ® 2023 Upload by EventHive</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

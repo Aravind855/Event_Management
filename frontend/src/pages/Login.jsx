@@ -22,7 +22,6 @@ export default function Login() {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  // Simplified validation for email and password
   useEffect(() => {
     const newErrors = {};
     if (formData.email && !emailRegex.test(formData.email)) {
@@ -33,6 +32,12 @@ export default function Login() {
     }
     setErrors(newErrors);
   }, [formData]);
+
+  // This function is now correctly scoped and will be found by the onChange handlers.
+  const handleInputChange = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setLoginError('');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,13 +51,11 @@ export default function Login() {
       const response = await axios.post(`http://127.0.0.1:8000${endpoint}`, payload);
 
       if (response.data.status === 'success') {
-        // --- STORE TOKENS IN LOCALSTORAGE ---
         localStorage.setItem('access_token', response.data.tokens.access);
         localStorage.setItem('refresh_token', response.data.tokens.refresh);
         if(role === 'admin') {
           localStorage.setItem('admin_name', response.data.adminName);
         }
-
         navigate(role === 'admin' ? '/admin-dashboard' : '/user-dashboard');
       }
     } catch (error) {
@@ -78,18 +81,14 @@ export default function Login() {
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
         >
-
-
-          {/* Branding */}
-          <div className="mb-15 pl-40">
-            <h1 className="text-2xl font-bold text-gray-900">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-bold text-gray-900">
               Event <span className="text-purple-600">Hive</span>
             </h1>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-3xl  font-bold text-gray-900 mb-2 pl-20">Sign In to Event Hive</h2>
-            {/* <p className="text-gray-600 pl-39 mt-5">{role === 'admin' ? 'Admin Portal Access' : 'Welcome back to your account'}</p> */}
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign In to Event Hive</h2>
           </div>
 
           {loginError && (
@@ -104,7 +103,6 @@ export default function Login() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field (for both User and Admin) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2 uppercase">
                 Your Email
@@ -140,7 +138,6 @@ export default function Login() {
               )}
             </div>
 
-            {/* Password Field */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <label className="block text-sm font-medium text-gray-700 uppercase">Password</label>
@@ -177,7 +174,6 @@ export default function Login() {
               )}
             </div>
 
-            {/* Submit Button */}
             <motion.button
               type="submit"
               disabled={!isFormValid() || isLoading}
@@ -199,7 +195,6 @@ export default function Login() {
             </motion.button>
           </form>
 
-          {/* Sign Up Link */}
           <p className="mt-8 text-center text-sm text-gray-600">
             Don’t have an account?{' '}
             <Link to={`/signup?role=${role}`} className="text-purple-600 hover:text-purple-700 font-medium">
@@ -220,19 +215,20 @@ export default function Login() {
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           <div className="text-center text-white p-8 bg-black/30 backdrop-blur-sm rounded-2xl max-w-md">
-            <h3 className="text-3xl font-bold mb-4">Hello Friend</h3>
+            <h3 className="text-3xl font-bold mb-4">New Here?</h3>
             <p className="text-lg opacity-90 leading-relaxed">
-              To keep connected with us please login with your personal information
+              Sign up and discover a world of amazing events waiting for you.
             </p>
-                        <Link to={`/login?role=${role}`}>
-                          <motion.button
-                            className="px-8 py-3 border-2 border-white text-white mt-4 rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-300 font-medium"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                          >
-                            Sign In
-                          </motion.button>
-                        </Link>
+            {/* CORRECTED: This now links to the signup page */}
+            <Link to={`/signup?role=${role}`}>
+              <motion.button
+                className="px-8 py-3 border-2 border-white text-white mt-4 rounded-lg hover:bg-white hover:text-gray-900 transition-all duration-300 font-medium"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Sign Up
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
       </div>
