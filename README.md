@@ -72,34 +72,35 @@
 
 ## 📁 Project Structure
 
+Project Structure
 event-hive/
 ├── backend/
-│ ├── backend/
-│ │ ├── settings.py
-│ │ ├── urls.py
-│ │ └── wsgi.py
-│ ├── event/
-│ │ ├── views.py
-│ │ ├── authentication.py
-│ │ └── urls.py
-│ └── manage.py
+│   ├── backend/
+│   │   ├── settings.py          # Django settings with MongoDB and JWT configuration
+│   │   ├── urls.py             # Main URL routing
+│   │   └── wsgi.py             # WSGI configuration
+│   ├── event/
+│   │   ├── views.py            # API views for user auth, event management, and description generation
+│   │   ├── authentication.py    # Custom MongoJWTAuthentication class
+│   │   └── urls.py             # App-specific URL routing
+│   └── manage.py               # Django management script
 ├── frontend/
-│ ├── src/
-│ │ ├── pages/
-│ │ │ ├── AdminDashboard.jsx
-│ │ │ ├── UserDashboard.jsx
-│ │ │ ├── Login.jsx
-│ │ │ ├── UserSignup.jsx
-│ │ │ ├── CreateEvent.jsx
-│ │ │ ├── EventDescription.jsx
-│ │ │ └── Home.jsx
-│ │ ├── assets/
-│ │ └── App.jsx
-│ ├── package.json
-│ ├── vite.config.js
-│ └── tailwind.config.js
-├── .env
-└── README.md
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── AdminDashboard.jsx  # Admin dashboard for event management
+│   │   │   ├── UserDashboard.jsx   # User dashboard for event browsing
+│   │   │   ├── Login.jsx          # Login page for users and admins
+│   │   │   ├── UserSignup.jsx     # User signup page
+│   │   │   ├── CreateEvent.jsx    # Event creation page for admins
+│   │   │   ├── EventDescription.jsx # Event details page
+│   │   │   └── Home.jsx           # Landing page
+│   │   ├── assets/                # Images and static assets
+│   │   └── App.jsx                # Main React app with routing
+│   ├── package.json               # Frontend dependencies and scripts
+│   ├── vite.config.js             # Vite configuration
+│   └── tailwind.config.js         # Tailwind CSS configuration
+├── .env                           # Environment variables (not included in repo)
+└── README.md                      # Project documentation
 
 
 ---
@@ -272,9 +273,3 @@ Please make sure your code follows the project’s coding standards and includes
 This project is licensed under the **MIT License**.
 See the [LICENSE](LICENSE) file for full license information.
 
-```
-
-You can now **copy and paste this directly** into your `README.md` file with proper markdown support.
-
-Let me know if you’d like this as a downloadable `.md` or `.pdf` file as well!
-```
